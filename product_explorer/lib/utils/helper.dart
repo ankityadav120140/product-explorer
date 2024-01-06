@@ -3,7 +3,9 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'errors/exception.dart';
 
@@ -133,5 +135,29 @@ class Helpers {
       }
     }
     return null;
+  }
+
+  static String getFormattedDateMonth({required DateTime date}) {
+    return DateFormat('d MMM y', 'en_US').format(date);
+  }
+
+  static String getFormattedTime({required DateTime date}) {
+    return DateFormat("hh:mm a").format(date);
+  }
+
+  Future<void> setString({
+    required String key,
+    required String value,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
+  }
+
+  Future<String?> getString({
+    required String key,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final value = prefs.getString(key);
+    return value;
   }
 }

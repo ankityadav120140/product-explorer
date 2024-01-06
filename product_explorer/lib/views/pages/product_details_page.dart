@@ -7,15 +7,15 @@ import '../widgets/description_tab.dart';
 import '../widgets/details_tab.dart';
 import '../widgets/img_card.dart';
 
-class ProductPage extends StatefulWidget {
+class ProductDetailsPage extends StatefulWidget {
   final Product product;
-  const ProductPage({super.key, required this.product});
+  const ProductDetailsPage({super.key, required this.product});
 
   @override
-  State<ProductPage> createState() => _ProductPageState();
+  State<ProductDetailsPage> createState() => _ProductDetailsPageState();
 }
 
-class _ProductPageState extends State<ProductPage>
+class _ProductDetailsPageState extends State<ProductDetailsPage>
     with SingleTickerProviderStateMixin {
   final test = true.obs;
   final selectedTabIndex = 0.obs;

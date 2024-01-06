@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import 'package:product_explorer/consts/keys.dart';
+import 'package:product_explorer/contollers/product_controller.dart';
+import 'package:product_explorer/local/controller/local_product_controller.dart';
+import 'package:product_explorer/utils/helper.dart';
+import 'package:product_explorer/views/pages/all_products_page.dart';
 import 'package:sizer/sizer.dart';
-
-import '../../models/responses/get_products_response.dart';
-import '../../contollers/product_controller.dart';
-import '../widgets/product_home_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,100 +15,98 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  final lastSync = ''.obs;
+  final downloading = false.obs;
   final ProductController productController = Get.find();
-  final searchController = TextEditingController().obs;
-  final test = true.obs;
-  final filteredProducts = <Product>[].obs;
-
-  Future getData() async {
-    await productController.getAllProducts();
-    filteredProducts.assignAll(productController.products);
-  }
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
-      EasyLoading.show();
-      await getData();
-      EasyLoading.dismiss();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      checkDownload();
     });
+  }
+
+  Future checkDownload() async {
+    lastSync.value = await Helpers().getString(key: Keys.LASTSYNC) ?? '';
+    if (lastSync.isEmpty) {
+      await _downloadData();
+    }
+  }
+
+  Future<void> _downloadData() async {
+    progress.value = 0.0;
+    downloading.value = true;
+    await productController.downloadProducts();
+    lastSync.value = DateTime.now().toString();
+    downloading.value = false;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await productController.downloadProducts();
-        },
-        child: SafeArea(
-          child: Container(
-            padding: EdgeInsets.all(5.w),
-            child: Obx(() {
-              if (test.isTrue) {}
-              return Column(
-                children: [
-                  searchBar(),
-                  SizedBox(height: 2.h),
-                  Expanded(
-                    child: ListView.builder(
-                        itemCount: filteredProducts.length,
-                        itemBuilder: (context, index) {
-                          final product = filteredProducts[index];
-                          return productHomeCard(product: product);
-                        }),
-                  )
-                ],
-              );
-            }),
+      appBar: AppBar(
+        title: const Text('Product Explorer'),
+      ),
+      backgroundColor: const Color.fromRGBO(245, 245, 245, 1),
+      body: Obx(() {
+        return Center(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Welcome!",
+                style: Get.textTheme.displayMedium,
+              ),
+              SizedBox(height: 10.h),
+              SizedBox(
+                width: 50.w,
+                child: Image.asset('assets/pe_logo.jpg'),
+              ),
+              SizedBox(height: 10.h),
+              ElevatedButton.icon(
+                onPressed: downloading.value ? null : _downloadData,
+                icon: const Icon(Icons.download),
+                label: Text(lastSync.isNotEmpty
+                    ? 'Re-Sync'
+                    : downloading.value
+                        ? 'Downloading...'
+                        : 'Download'),
+              ),
+              SizedBox(height: 5.h),
+              if (downloading.value) ...{
+                LinearProgressIndicator(value: progress.value / 100),
+                SizedBox(height: 2.h),
+                Text(
+                  'Progress: ${progress.value.toStringAsFixed(1)}%',
+                  style: Get.textTheme.bodyMedium,
+                ),
+              } else if (lastSync.isNotEmpty) ...{
+                Text(
+                  "Last Sync: ${Helpers.getFormattedDateMonth(date: DateTime.parse(lastSync.value))}, ${Helpers.getFormattedTime(date: DateTime.parse(lastSync.value))}",
+                  style: Get.textTheme.bodyMedium,
+                ),
+                SizedBox(height: 2.h),
+              },
+            ],
           ),
+        );
+      }),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          if (lastSync.isNotEmpty) {
+            Get.to(const AllProductsPage());
+          }
+        },
+        label: const Row(
+          children: [
+            Text('Explore Products'),
+            Icon(Icons.arrow_right_alt),
+          ],
         ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
-  }
-
-  Widget searchBar() {
-    return TextField(
-      controller: searchController.value,
-      style: TextStyle(fontSize: 13.sp),
-      decoration: InputDecoration(
-        contentPadding: EdgeInsets.symmetric(vertical: 1.5.h),
-        filled: true,
-        fillColor: Colors.grey.shade300,
-        prefixIcon: const Icon(Icons.search),
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.clear),
-          onPressed: () {
-            filteredProducts.assignAll(productController.products);
-            searchController.value.clear();
-          },
-        ),
-        hintText: 'Search',
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.transparent),
-          borderRadius: BorderRadius.circular(25.sp),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Colors.transparent),
-          borderRadius: BorderRadius.circular(25.sp),
-        ),
-      ),
-      onChanged: (value) {
-        if (value.isNotEmpty) {
-          filterProducts(value);
-        } else {
-          filteredProducts.assignAll(productController.products);
-        }
-      },
-    );
-  }
-
-  void filterProducts(String query) {
-    filteredProducts.assignAll(productController.products
-        .where((product) =>
-            product.qrCode.toLowerCase().contains(query.toLowerCase()) ||
-            product.option.toLowerCase().contains(query.toLowerCase()))
-        .toList());
   }
 }

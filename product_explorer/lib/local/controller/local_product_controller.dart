@@ -1,13 +1,18 @@
+import 'package:get/get.dart';
 import 'package:product_explorer/models/responses/get_products_response.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../services/database_helper.dart';
 import '../../utils/helper.dart';
+
+final progress = 0.0.obs;
 
 class LocalProductController {
   final Database? _database = DatabaseHelper.database;
 
   Future<void> insertLocalProduct(List<Product> localProductData) async {
     try {
+      final totalProducts = localProductData.length;
+      var completedProducts = 0;
       for (final singleLocalProductData in localProductData) {
         final productDataWithoutSizes =
             Map<String, dynamic>.from(singleLocalProductData.toJson());
@@ -20,6 +25,8 @@ class LocalProductController {
           await _database?.insert(
               'AvailableSizes', {'product_id': productId, 'size': size});
         }
+        completedProducts++;
+        progress.value = (completedProducts / totalProducts) * 100;
       }
     } catch (error) {
       Helpers.logger(

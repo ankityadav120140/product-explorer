@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:product_explorer/views/pages/product_page.dart';
+import 'package:product_explorer/views/pages/product_details_page.dart';
 import 'package:sizer/sizer.dart';
 
 import '../../models/responses/get_products_response.dart';
@@ -8,7 +8,7 @@ import '../../models/responses/get_products_response.dart';
 Widget productHomeCard({required Product product}) {
   return InkWell(
     onTap: () {
-      Get.to(ProductPage(product: product));
+      Get.to(ProductDetailsPage(product: product));
     },
     child: Container(
       padding: EdgeInsets.all(2.w),

@@ -6,6 +6,9 @@ import 'package:product_explorer/local/controller/local_product_controller.dart'
 import 'package:product_explorer/models/responses/get_products_response.dart';
 import 'package:product_explorer/services/product_services.dart';
 
+import '../consts/keys.dart';
+import '../utils/helper.dart';
+
 class ProductController extends GetxController {
   final Dio dio;
   ProductController({required this.dio});
@@ -13,16 +16,16 @@ class ProductController extends GetxController {
   late final _service = ProductServices(dio: dio);
 
   Future<bool> downloadProducts() async {
-    EasyLoading.show();
     final successOrFailure = await _service.getAllProducts();
-    successOrFailure.fold((l) {
+    await successOrFailure.fold((l) {
       EasyLoading.dismiss();
       EasyLoading.showError(l.toString());
-      debugPrint("Failure In endRide $l");
+      debugPrint("Failure In downloadProducts $l");
     }, (r) async {
       await LocalProductController().deleteLocalProduct();
       await LocalProductController().insertLocalProduct(r.products);
-      await getAllProducts();
+      await Helpers()
+          .setString(key: Keys.LASTSYNC, value: DateTime.now().toString());
     });
     return successOrFailure.isRight();
   }

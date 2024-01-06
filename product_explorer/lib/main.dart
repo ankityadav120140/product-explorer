@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import 'package:product_explorer/views/pages/home_page.dart';
 import 'services/database_helper.dart';
-import 'views/pages/home_page.dart';
 import 'package:sizer/sizer.dart';
 
 import 'utils/dependency_injector.dart';
